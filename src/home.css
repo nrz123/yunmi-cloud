@@ -1,0 +1,12 @@
+.ant-tabs-content{
+    height: 100%;
+}
+.ant-table-header{
+    height: 50px;
+}
+.ant-table-body{
+    height: calc(100% - 50px);
+}
+.ant-spin-nested-loading,.ant-spin-container,.ant-table-fixed-header,.ant-table-container{
+    height: 100%;
+}
