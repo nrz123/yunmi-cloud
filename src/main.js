@@ -70,7 +70,7 @@ let startRun = win => {
                                 height: 800,
                                 resizable: false
                             })
-                            run = new Run(step, appPath + '/src' + '/bundle.js', sliceId, w)
+                            run = new Run(step, appPath + '/src' + '/preload.js', sliceId, w)
                             run.log = console.log
                             run.checkData = () => new Promise(resolve => {
                                 net.fetch(protocal + serverHost + "/cloud/checkData", {
