@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, session, ipcMain, net, BaseWindow } = require('electron')
+const { app, BrowserWindow, Menu, session, ipcMain, net } = require('electron')
 const { Run } = require('./run.js')
 const WebSocket = require('ws')
 const crypto = require('crypto')
@@ -8,7 +8,7 @@ app.commandLine.appendSwitch('ignore-certificate-errors')
 app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors')
 app.commandLine.appendSwitch('disable-features', 'UserAgentClientHint')
 let isDev = !app.isPackaged
-isDev || Menu.setApplicationMenu(null)
+Menu.setApplicationMenu(null)
 let protocal = 'http://'
 let serverHost = '127.0.0.1:80'
 let password = ''
@@ -65,7 +65,7 @@ let startRun = win => {
                             if (!task) return
                             if (run) return
                             let { sliceId, id, step } = task
-                            let w = new BaseWindow({
+                            let w = new BrowserWindow({
                                 width: 1200,
                                 height: 800,
                                 resizable: false
