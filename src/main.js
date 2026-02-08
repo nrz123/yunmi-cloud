@@ -115,7 +115,6 @@ let startRun = win => {
                                         d.value = fname + '.png'
                                         form_data.append("file", b, d.value)
                                         net.fetch(protocal + serverHost + "/cloud/upload", { method: "POST", body: form_data })
-                                        d.value = protocal + serverHost + '/' + d.value
                                     }
                                     return d
                                 }))
