@@ -7,6 +7,9 @@ app.commandLine.appendSwitch('--disable-web-security')
 app.commandLine.appendSwitch('ignore-certificate-errors')
 app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors')
 app.commandLine.appendSwitch('disable-features', 'UserAgentClientHint')
+app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled')
+app.commandLine.appendSwitch('enable-gpu-rasterization')
+app.commandLine.appendSwitch('ignore-gpu-blocklist')
 let isDev = !app.isPackaged
 Menu.setApplicationMenu(null)
 let protocal = 'http://'
@@ -281,52 +284,21 @@ let vend = (webContents, fid) => {
     if (fmap) {
         let umap = fmap[fid]
         if (umap) {
-            let filenames = [], codecs = []
+            let filenames = []
             for (let uid in umap) {
                 if (umap[uid]) {
                     umap[uid].stream.close()
-                    let index = umap[uid].mimeType.indexOf('codecs=')
-                    index > -1 && codecs.push(umap[uid].mimeType.slice(index + 7).replace(new RegExp('"', 'g'), ''))
                     filenames.push(umap[uid].filename)
                 }
             }
-            Promise.all(filenames.map(async filename => {
-                let url = (protocal == 'http://' ? 'ws://' : 'wss://') + serverHost + '/cloud/upws'
-                let cookie = await ck(url)
-                let ws = new WebSocket(url, {
-                    headers: {
-                        'filename': fid + '/' + filename + 'v.m3u8',
-                        'Cookie': cookie
-                    }
-                })
-                await new Promise(resolve => {
-                    ws.onopen = () => setTimeout(resolve, 100)
-                })
-                ws.binaryType = 'arraybuffer'
-                ws.send('#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\n' + filename + '.mp4\n#EXT-X-ENDLIST')
-                ws.close()
-                ws = new WebSocket(url, {
-                    headers: {
-                        'filename': fid + '/' + filename + '.m3u8',
-                        'Cookie': cookie
-                    }
-                })
-                await new Promise(resolve => {
-                    ws.onopen = () => setTimeout(resolve, 100)
-                })
-                ws.binaryType = 'arraybuffer'
-                ws.send('#EXTM3U\n#EXT-X-STREAM-INF:CODECS="' + codecs.join() + '"\n' + filename + 'v.m3u8')
-                ws.close()
-            })).then(() => {
-                net.fetch(protocal + serverHost + "/cloud/upend", {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        'folder': fid,
-                        'files': filenames
-                    })
+            net.fetch(protocal + serverHost + "/cloud/upend", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    'folder': fid,
+                    'files': filenames
                 })
             })
             delete fmap[fid]
@@ -346,8 +318,8 @@ ipcMain.on('video', async (event, fid, uid, mimeType, buffer) => {
                 for (let fid in fmap) {
                     vend(webContents, fid)
                 }
+                delete videoMap[webContents]
             }
-            delete videoMap[webContents]
         })
     }
     let fmap = videoMap[webContents]
@@ -356,7 +328,10 @@ ipcMain.on('video', async (event, fid, uid, mimeType, buffer) => {
     }
     let umap = fmap[fid]
     if (!umap[uid]) {
-        let filename = 'video' + Object.keys(umap).length
+        const kind = mimeType.includes("audio") ? "audio" : mimeType.includes("video") ? "video" : "unknown"
+        let filename = kind + Object.keys(umap).filter(key => {
+            return umap[key].filename.includes(kind)
+        }).length
         let url = (protocal == 'http://' ? 'ws://' : 'wss://') + serverHost + '/cloud/upws'
         let cookie = await ck(url)
         let ws = new WebSocket(url, {

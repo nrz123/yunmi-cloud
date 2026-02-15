@@ -1,4 +1,17 @@
 const { ipcRenderer } = require('electron')
+delete window.process
+window.chrome = { runtime: {} }
+Object.defineProperty(navigator, 'webdriver', { get: () => false })
+Object.defineProperty(navigator, 'platform', { get: () => 'Win32' })
+Object.defineProperty(navigator, 'vendor', { get: () => 'Google Inc.' })
+Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 })
+Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 })
+const getParameter = WebGLRenderingContext.prototype.getParameter
+WebGLRenderingContext.prototype.getParameter = function (param) {
+    if (param === 37445) return 'Intel Inc.'
+    if (param === 37446) return 'Intel Iris OpenGL Engine'
+    return getParameter.call(this, param)
+}
 const getNodes = xpath => {
     let result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
     let arr = []
@@ -215,6 +228,14 @@ URL.createObjectURL = function (obj) {
             }
             return sb
         }
+        let isTypeSupported = obj.isTypeSupported
+        obj.isTypeSupported = function (mimeType) {
+            if (mimeType.includes("mp4a.40.5")) {
+                console.warn("Blocking HE-AAC, forcing fallback to AAC-LC");
+                return false
+            }
+            return isTypeSupported.apply(this, arguments)
+        }
     }
     return url
 }
@@ -297,7 +318,7 @@ window.runApi = {
                                 }
                                 if (reqType != 'preview') {
                                     if (value.startsWith('blob:')) {
-                                        let fid = value = uMap[value]
+                                        value = uMap[value]
                                         if (value) {
                                             let time = 0
                                             let interval = setInterval(() => {
@@ -312,8 +333,9 @@ window.runApi = {
                                             await new Promise(resolve => {
                                                 node.addEventListener('ended', resolve, false)
                                             })
-                                            ipcRenderer.send('videoend', fid)
+                                            ipcRenderer.send('videoend', value)
                                             clearInterval(interval)
+                                            value = value + '/0.mp4'
                                         }
                                     }
                                 }
