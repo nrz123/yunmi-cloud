@@ -41,7 +41,7 @@ class Set extends React.Component {
                         </Select>} placeholder="服务器地址" />
                     </Form.Item>
                     <Form.Item name="password">
-                        <Input placeholder="密码" />
+                        <Input.Password placeholder="密码" />
                     </Form.Item>
                     <Form.Item>
                         最大任务数: <InputNumber min={1} value={this.state.taskNumber} onChange={value => this.setState({ taskNumber: value })} />
